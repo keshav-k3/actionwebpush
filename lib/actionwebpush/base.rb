@@ -24,9 +24,19 @@ module ActionWebPush
       push(subscriptions)
     end
 
-    def deliver_later(subscriptions)
-      # This will be implemented with ActiveJob integration
-      push(subscriptions)
+    def deliver_later(subscriptions, wait: nil, wait_until: nil, queue: nil, priority: nil)
+      subscriptions = Array(subscriptions)
+
+      subscriptions.each do |subscription|
+        job = ActionWebPush::DeliveryJob.set(
+          wait: wait,
+          wait_until: wait_until,
+          queue: queue || :action_web_push,
+          priority: priority
+        )
+
+        job.perform_later(params, { id: subscription.id })
+      end
     end
 
     private

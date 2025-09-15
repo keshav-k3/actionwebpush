@@ -17,24 +17,34 @@ module ActionWebPush
     end
 
     def deliver(connection: nil)
-      WebPush.payload_send(
-        message: encoded_message,
-        endpoint: endpoint,
-        p256dh: p256dh_key,
-        auth: auth_key,
-        vapid: vapid_identification,
-        connection: connection,
-        urgency: options[:urgency] || "high"
-      )
+      delivery_method = ActionWebPush.config.delivery_method_class.new
+      delivery_method.deliver!(self, connection: connection)
     end
 
     def deliver_now(connection: nil)
       deliver(connection: connection)
     end
 
-    def deliver_later
-      # This will be implemented with ActiveJob integration
-      deliver_now
+    def deliver_later(wait: nil, wait_until: nil, queue: nil, priority: nil)
+      job = ActionWebPush::DeliveryJob.set(
+        wait: wait,
+        wait_until: wait_until,
+        queue: queue || :action_web_push,
+        priority: priority
+      )
+
+      job.perform_later(to_params)
+    end
+
+    def to_params
+      {
+        title: title,
+        body: body,
+        data: data,
+        endpoint: endpoint,
+        p256dh_key: p256dh_key,
+        auth_key: auth_key
+      }.merge(options)
     end
 
     private
