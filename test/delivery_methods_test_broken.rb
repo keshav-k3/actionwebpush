@@ -63,6 +63,7 @@ class DeliveryMethodsTest < Minitest::Test
   end
 
   def test_web_push_delivery_method
+    # Skip if WebPush is not available (Ruby < 3.0)
     skip "WebPush not available" unless defined?(::WebPush)
 
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
@@ -70,8 +71,9 @@ class DeliveryMethodsTest < Minitest::Test
     # Mock WebPush response
     mock_response = Minitest::Mock.new
     mock_response.expect :success?, true
+    mock_response.expect :code, 200
 
-    ::WebPush.stub :payload_send, -> (*args) { mock_response } do
+    ::WebPush.stub :payload_send, mock_response do
       result = web_push_method.deliver!(@notification)
       assert result
     end
@@ -85,7 +87,7 @@ class DeliveryMethodsTest < Minitest::Test
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
 
     # Mock WebPush error
-    ::WebPush.stub :payload_send, -> (*args) { raise ::WebPush::ResponseError.new("Test error") } do
+    ::WebPush.stub :payload_send, -> { raise ::WebPush::ResponseError.new("Test error", "test") } do
       assert_raises(ActionWebPush::DeliveryError) do
         web_push_method.deliver!(@notification)
       end
@@ -97,9 +99,9 @@ class DeliveryMethodsTest < Minitest::Test
 
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
 
-    # Mock expired subscription error - simplified for testing
-    ::WebPush.stub :payload_send, -> (*args) { raise StandardError.new("410 Gone") } do
-      assert_raises(ActionWebPush::DeliveryError) do
+    # Mock expired subscription error
+    ::WebPush.stub :payload_send, -> { raise ::WebPush::ExpiredSubscription.new("Expired") } do
+      assert_raises(ActionWebPush::ExpiredSubscriptionError) do
         web_push_method.deliver!(@notification)
       end
     end
@@ -137,5 +139,76 @@ class DeliveryMethodsTest < Minitest::Test
     result = method.deliver!(@notification)
     assert result
     assert_equal @notification, method.delivered_notification
+  end
+
+  def test_delivery_with_connection_pooling
+    skip "WebPush not available" unless defined?(::WebPush)
+
+    web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
+    mock_connection = Object.new
+
+    mock_response = Minitest::Mock.new
+    mock_response.expect :success?, true
+    mock_response.expect :code, 200
+
+    ::WebPush.stub :payload_send, mock_response do
+      result = web_push_method.deliver!(@notification, connection: mock_connection)
+      assert result
+    end
+
+    mock_response.verify
+  end
+
+  def test_delivery_with_retry_logic
+    skip "WebPush not available" unless defined?(::WebPush)
+
+    web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
+    attempt_count = 0
+
+    # Mock intermittent failure
+    ::WebPush.stub :payload_send, -> {
+      attempt_count += 1
+      if attempt_count < 3
+        raise ::WebPush::ResponseError.new("Temporary error", "500")
+      else
+        mock_response = Object.new
+        def mock_response.success?; true; end
+        def mock_response.code; 200; end
+        mock_response
+      end
+    } do
+      result = web_push_method.deliver!(@notification, retries: 3)
+      assert result
+      assert_equal 3, attempt_count
+    end
+  end
+
+  def test_delivery_with_timeout
+    skip "WebPush not available" unless defined?(::WebPush)
+
+    web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
+
+    # Mock timeout
+    ::WebPush.stub :payload_send, -> { sleep 2; nil } do
+      assert_raises(ActionWebPush::DeliveryError) do
+        web_push_method.deliver!(@notification, timeout: 1)
+      end
+    end
+  end
+
+  def test_delivery_metrics_collection
+    test_method = ActionWebPush::DeliveryMethods::Test.new
+
+    start_time = Time.now
+    test_method.deliver!(@notification)
+    end_time = Time.now
+
+    metrics = test_method.last_delivery_metrics
+
+    assert_kind_of Hash, metrics
+    assert metrics.key?(:delivery_time)
+    assert metrics.key?(:success)
+    assert metrics[:success]
+    assert metrics[:delivery_time] >= 0
   end
 end

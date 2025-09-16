@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", "~> 6.0", ">= 6.0.0"
   spec.add_dependency "web-push", "~> 3.0"
   spec.add_dependency "concurrent-ruby", "~> 1.1"
+  spec.add_dependency "net-http-persistent", "~> 4.0"
 
   # Development dependencies
   spec.add_development_dependency "sqlite3", "~> 1.4"

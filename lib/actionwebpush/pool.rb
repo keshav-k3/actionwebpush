@@ -55,7 +55,7 @@ module ActionWebPush
 
     def deliver(notification, subscription_id = nil)
       notification.deliver(connection: connection)
-    rescue WebPush::ExpiredSubscription, OpenSSL::OpenSSLError => ex
+    rescue WebPush::ExpiredSubscription, OpenSSL::OpenSSLError
       invalidate_subscription_later(subscription_id) if subscription_id && invalid_subscription_handler
     end
 
