@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "logger"
+
 module ActionWebPush
   module DeliveryMethods
     class Base
@@ -16,7 +18,8 @@ module ActionWebPush
       protected
 
       def logger
-        ActionWebPush.config.logger || (defined?(Rails) ? Rails.logger : Logger.new(STDOUT))
+        ActionWebPush.config.logger ||
+          (defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : Logger.new(STDOUT))
       end
     end
   end

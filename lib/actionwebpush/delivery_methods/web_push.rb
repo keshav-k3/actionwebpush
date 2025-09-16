@@ -6,7 +6,7 @@ module ActionWebPush
   module DeliveryMethods
     class WebPush < Base
       def deliver!(notification, connection: nil)
-        ::WebPush.payload_send(
+        response = ::WebPush.payload_send(
           message: encoded_message(notification),
           endpoint: notification.endpoint,
           p256dh: notification.p256dh_key,
@@ -15,6 +15,7 @@ module ActionWebPush
           connection: connection,
           urgency: notification.options[:urgency] || "high"
         )
+        response.success?
       rescue ::WebPush::ExpiredSubscription => e
         raise ActionWebPush::ExpiredSubscriptionError, e.message
       rescue StandardError => e
