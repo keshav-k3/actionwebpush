@@ -7,6 +7,7 @@ module ActionWebPush
   class DeliveryError < Error; end
   class ExpiredSubscriptionError < Error; end
   class ConfigurationError < Error; end
+  class RateLimitExceeded < Error; end
 
   autoload :Configuration, "actionwebpush/configuration"
   autoload :Notification, "actionwebpush/notification"
@@ -16,6 +17,13 @@ module ActionWebPush
   autoload :BatchDelivery, "actionwebpush/batch_delivery"
   autoload :Metrics, "actionwebpush/metrics"
   autoload :TestHelper, "actionwebpush/test_helper"
+  autoload :StatusChannel, "actionwebpush/status_channel"
+  autoload :StatusBroadcaster, "actionwebpush/status_broadcaster"
+  autoload :RateLimiter, "actionwebpush/rate_limiter"
+  autoload :TenantConfiguration, "actionwebpush/tenant_configuration"
+  autoload :TenantManager, "actionwebpush/tenant_configuration"
+  autoload :SentryIntegration, "actionwebpush/sentry_integration"
+  autoload :Analytics, "actionwebpush/analytics"
 
   module DeliveryMethods
     autoload :Base, "actionwebpush/delivery_methods/base"
