@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "ActionWebPush provides Rails integration for Web Push notifications with ActionMailer-like interface, thread pool management, and subscription handling."
   spec.homepage = "https://github.com/yourusername/actionwebpush"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 2.6.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "rails", ">= 7.0.0"
+  spec.add_dependency "rails", ">= 6.0.0"
   spec.add_dependency "web-push", "~> 3.0"
   spec.add_dependency "concurrent-ruby", "~> 1.1"
 
