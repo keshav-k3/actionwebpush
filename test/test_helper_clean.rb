@@ -2,9 +2,6 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-# Load test environment with mocks first
-require_relative "test_environment"
-
 require "actionwebpush"
 require "minitest/autorun"
 require "minitest/mock"
@@ -13,7 +10,7 @@ class Minitest::Test
   def setup
     # Reset configuration for each test
     ActionWebPush.configuration = nil
-    # Clear test deliveries
+    # Clear test deliveries if available
     if defined?(ActionWebPush::DeliveryMethods::Test)
       ActionWebPush::DeliveryMethods::Test.clear_deliveries!
     end
