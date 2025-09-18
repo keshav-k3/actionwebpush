@@ -29,6 +29,23 @@ module ActionWebPush
     autoload :Base, "actionwebpush/delivery_methods/base"
     autoload :WebPush, "actionwebpush/delivery_methods/web_push"
     autoload :Test, "actionwebpush/delivery_methods/test"
+
+    @delivery_methods = {}
+
+    def self.for(method)
+      case method.to_sym
+      when :test
+        Test.new
+      when :web_push
+        WebPush.new
+      else
+        @delivery_methods[method.to_sym]&.new || raise(ArgumentError, "Unknown delivery method: #{method}")
+      end
+    end
+
+    def self.register(name, klass)
+      @delivery_methods[name.to_sym] = klass
+    end
   end
 
   class << self

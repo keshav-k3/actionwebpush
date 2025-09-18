@@ -47,6 +47,14 @@ module ActionWebPush
       }.merge(options)
     end
 
+    def to_json(*args)
+      {
+        title: title,
+        body: body,
+        data: data
+      }.merge(options).to_json(*args)
+    end
+
     private
 
     def vapid_identification

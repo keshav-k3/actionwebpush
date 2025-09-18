@@ -3,8 +3,15 @@
 module ActionWebPush
   module DeliveryMethods
     class Test < Base
-      cattr_accessor :deliveries
-      self.deliveries = []
+      @@deliveries = []
+
+      def self.deliveries
+        @@deliveries
+      end
+
+      def self.deliveries=(value)
+        @@deliveries = value
+      end
 
       def deliver!(notification, connection: nil)
         self.class.deliveries << {
@@ -15,7 +22,7 @@ module ActionWebPush
           p256dh_key: notification.p256dh_key,
           auth_key: notification.auth_key,
           options: notification.options,
-          delivered_at: Time.current
+          delivered_at: Time.now
         }
 
         logger.info "ActionWebPush::Test delivered: #{notification.title}"

@@ -2,8 +2,15 @@
 
 module ActionWebPush
   class Base
-    class_attribute :default_params
-    self.default_params = {}
+    @@default_params = {}
+
+    def self.default_params
+      @@default_params
+    end
+
+    def self.default_params=(value)
+      @@default_params = value
+    end
 
     attr_reader :params
 
@@ -15,9 +22,17 @@ module ActionWebPush
       new(**notification_params).push(subscriptions)
     end
 
-    def push(subscriptions)
-      notifications = build_notifications(subscriptions)
+    def push(subscriptions, **notification_params)
+      if notification_params.empty?
+        # Called with just subscriptions, use stored params
+        notifications = build_notifications(subscriptions, **@params)
+      else
+        # Called with both subscriptions and notification params
+        notifications = build_notifications(subscriptions, **notification_params)
+      end
+
       deliver_notifications(notifications)
+      notifications.first # Return first notification for compatibility
     end
 
     def deliver_now(subscriptions)
@@ -41,19 +56,30 @@ module ActionWebPush
 
     private
 
-    def build_notifications(subscriptions)
-      subscriptions = Array(subscriptions)
+    def build_notifications(subscriptions, **notification_params)
+      subscriptions = subscriptions.is_a?(Array) ? subscriptions : [subscriptions]
       subscriptions.map do |subscription|
-        subscription.build_notification(**params)
+        if subscription.respond_to?(:build_notification)
+          subscription.build_notification(**notification_params)
+        else
+          # Handle hash-based subscription data
+          ActionWebPush::Notification.new(
+            endpoint: subscription.is_a?(Hash) ? subscription[:endpoint] : subscription.endpoint,
+            p256dh_key: subscription.is_a?(Hash) ? subscription[:p256dh_key] : subscription.p256dh_key,
+            auth_key: subscription.is_a?(Hash) ? subscription[:auth_key] : subscription.auth_key,
+            **notification_params
+          )
+        end
       end
     end
 
     def deliver_notifications(notifications)
-      if defined?(Rails) && Rails.configuration.x.action_web_push_pool
+      if defined?(Rails) && Rails.respond_to?(:configuration) && Rails.configuration.respond_to?(:x) && Rails.configuration.x.respond_to?(:action_web_push_pool)
         Rails.configuration.x.action_web_push_pool.queue(notifications)
       else
         # Fallback to direct delivery
-        notifications.each(&:deliver_now)
+        delivery_method = ActionWebPush::DeliveryMethods.for(ActionWebPush.config.delivery_method)
+        notifications.each { |notification| delivery_method.deliver!(notification) }
       end
     end
 
