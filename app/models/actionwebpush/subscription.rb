@@ -4,6 +4,8 @@ module ActionWebPush
   class Subscription < ActiveRecord::Base
     self.table_name = "action_web_push_subscriptions"
 
+    belongs_to :user
+
     validates :endpoint, presence: true
     validates :p256dh_key, presence: true
     validates :auth_key, presence: true
