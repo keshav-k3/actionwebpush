@@ -33,8 +33,16 @@ module ActionWebPush
     end
 
     initializer "action_web_push.set_autoload_paths" do |app|
-      app.config.autoload_paths << File.expand_path("../../app/models", __dir__)
-      app.config.autoload_paths << File.expand_path("../../app/controllers", __dir__)
+      models_path = File.expand_path("../../app/models", __dir__)
+      controllers_path = File.expand_path("../../app/controllers", __dir__)
+
+      unless app.config.autoload_paths.include?(models_path)
+        app.config.autoload_paths += [models_path]
+      end
+
+      unless app.config.autoload_paths.include?(controllers_path)
+        app.config.autoload_paths += [controllers_path]
+      end
     end
   end
 end

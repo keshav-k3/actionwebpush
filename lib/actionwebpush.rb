@@ -65,4 +65,10 @@ end
 if defined?(Rails)
   require "actionwebpush/railtie"
   require "actionwebpush/engine"
+
+  module Generators
+    autoload :InstallGenerator, "actionwebpush/generators/install_generator"
+    autoload :VapidKeysGenerator, "actionwebpush/generators/vapid_keys_generator"
+    autoload :CampfireMigrationGenerator, "actionwebpush/generators/campfire_migration_generator"
+  end
 end
