@@ -58,4 +58,16 @@ class BasicTest < Minitest::Test
     web_push_method = ActionWebPush::DeliveryMethods.for(:web_push)
     assert_kind_of ActionWebPush::DeliveryMethods::WebPush, web_push_method
   end
+
+  def test_rate_limiter_initialization
+    rate_limiter = ActionWebPush::RateLimiter.new
+
+    assert_instance_of ActionWebPush::RateLimiter, rate_limiter
+    assert_respond_to rate_limiter, :check_rate_limit!
+    assert_respond_to rate_limiter, :within_rate_limit?
+    assert rate_limiter.limits.key?(:endpoint)
+    assert rate_limiter.limits.key?(:user)
+    assert_equal 100, rate_limiter.limits[:endpoint][:max_requests]
+    assert_equal 3600, rate_limiter.limits[:endpoint][:window]
+  end
 end
