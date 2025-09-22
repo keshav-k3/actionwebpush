@@ -15,7 +15,7 @@ module ActionWebPush
         queue_size: config.queue_size
       )
       @invalidation_pool = Concurrent::FixedThreadPool.new(1)
-      @connection = Net::HTTP::Persistent.new(name: "action_web_push", pool_size: 150)
+      @connection = Net::HTTP::Persistent.new(name: "action_web_push", pool_size: config.connection_pool_size)
       @invalid_subscription_handler = invalid_subscription_handler
     end
 

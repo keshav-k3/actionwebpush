@@ -32,7 +32,7 @@ module ActionWebPush
         say "2. Configure VAPID keys in config/initializers/action_web_push.rb"
         say "3. Add 'has_many :push_subscriptions, class_name: \"ActionWebPush::Subscription\"' to your User model"
         say "4. Generate VAPID keys with: bundle exec rails generate action_web_push:vapid_keys"
-        say "\nFor more information, visit: https://github.com/yourusername/actionwebpush"
+        say "\nFor more information, visit: https://github.com/keshav-k3/actionwebpush"
       end
 
       private
