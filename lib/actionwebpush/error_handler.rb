@@ -52,7 +52,8 @@ module ActionWebPush
         retry_count: context[:retry_count] || 0
       )
 
-      log_level = context[:retry_count]&.> 2 ? :error : :warn
+      retry_count = context[:retry_count]
+      log_level = (retry_count.is_a?(Integer) && retry_count > 2) ? :error : :warn
       ActionWebPush.logger.send(log_level, "Delivery failed: #{error.message}")
 
       error
