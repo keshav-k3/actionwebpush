@@ -67,8 +67,9 @@ class DeliveryMethodsTest < Minitest::Test
 
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
 
-    # Mock WebPush response
+    # Mock WebPush response (called twice - for payload and return)
     mock_response = Minitest::Mock.new
+    mock_response.expect :success?, true
     mock_response.expect :success?, true
 
     ::WebPush.stub :payload_send, -> (*args) { mock_response } do

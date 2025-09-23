@@ -24,8 +24,9 @@ class ComprehensiveTest < Minitest::Test
 
     web_push_method = ActionWebPush::DeliveryMethods.for(:web_push)
 
-    # Mock WebPush.payload_send to avoid actual network call
+    # Mock WebPush.payload_send to avoid actual network call (called twice)
     mock_response = Minitest::Mock.new
+    mock_response.expect :success?, true
     mock_response.expect :success?, true
 
     ::WebPush.stub :payload_send, -> (*args) { mock_response } do
