@@ -25,6 +25,9 @@ module ActionWebPush
   autoload :SentryIntegration, "actionwebpush/sentry_integration"
   autoload :Analytics, "actionwebpush/analytics"
   autoload :Logging, "actionwebpush/logging"
+  autoload :Instrumentation, "actionwebpush/instrumentation"
+  autoload :ErrorHandler, "actionwebpush/error_handler"
+  autoload :Authorization, "actionwebpush/authorization"
 
   module DeliveryMethods
     autoload :Base, "actionwebpush/delivery_methods/base"
