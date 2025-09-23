@@ -19,6 +19,10 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/keshav-k3/actionwebpush"
   spec.metadata["changelog_uri"] = "https://github.com/keshav-k3/actionwebpush/blob/main/CHANGELOG.md"
+  spec.metadata["bug_tracker_uri"] = "https://github.com/keshav-k3/actionwebpush/issues"
+  spec.metadata["documentation_uri"] = "https://github.com/keshav-k3/actionwebpush#readme"
+  spec.metadata["wiki_uri"] = "https://github.com/keshav-k3/actionwebpush/wiki"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -35,14 +39,14 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "rails", ">= 6.0"
-  spec.add_dependency "web-push", "~> 3.0"
-  spec.add_dependency "concurrent-ruby", "~> 1.1"
-  spec.add_dependency "net-http-persistent", "~> 4.0"
+  spec.add_dependency "rails", ">= 6.0", "< 9.0"
+  spec.add_dependency "web-push", "~> 3.0", ">= 3.0.0"
+  spec.add_dependency "concurrent-ruby", "~> 1.1", ">= 1.1.0"
+  spec.add_dependency "net-http-persistent", "~> 4.0", ">= 4.0.0"
 
   # Development dependencies
-  spec.add_development_dependency "sqlite3", "~> 1.4"
-  spec.add_development_dependency "resque", "~> 2.0"
+  spec.add_development_dependency "sqlite3", "~> 1.4", ">= 1.4.0"
+  spec.add_development_dependency "resque", "~> 2.0", ">= 2.0.0"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

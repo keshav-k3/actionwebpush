@@ -5,13 +5,19 @@ require "redis" if defined?(Redis)
 module ActionWebPush
   class RateLimiter
     class MemoryStore
+      CLEANUP_INTERVAL = 300 # 5 minutes
+
       def initialize
         @store = {}
         @mutex = Mutex.new
+        @last_cleanup = Time.current
       end
 
       def increment(key, ttl)
         @mutex.synchronize do
+          # Periodic automatic cleanup
+          auto_cleanup! if should_cleanup?
+
           @store[key] ||= { count: 0, expires_at: Time.current + ttl }
 
           if @store[key][:expires_at] < Time.current
@@ -26,7 +32,29 @@ module ActionWebPush
 
       def cleanup!
         @mutex.synchronize do
-          @store.reject! { |_, v| v[:expires_at] < Time.current }
+          auto_cleanup!
+        end
+      end
+
+      def size
+        @mutex.synchronize { @store.size }
+      end
+
+      private
+
+      def should_cleanup?
+        Time.current - @last_cleanup > CLEANUP_INTERVAL
+      end
+
+      def auto_cleanup!
+        before_count = @store.size
+        @store.reject! { |_, v| v[:expires_at] < Time.current }
+        @last_cleanup = Time.current
+
+        # Log significant cleanups
+        cleaned = before_count - @store.size
+        if cleaned > 0 && defined?(ActionWebPush) && ActionWebPush.respond_to?(:logger)
+          ActionWebPush.logger.debug "ActionWebPush::RateLimiter cleaned up #{cleaned} expired entries (#{@store.size} remaining)"
         end
       end
     end

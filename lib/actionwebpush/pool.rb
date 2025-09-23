@@ -5,6 +5,7 @@ require "net/http/persistent"
 
 module ActionWebPush
   class Pool
+    include ActionWebPush::Logging
     attr_reader :delivery_pool, :invalidation_pool, :connection, :invalid_subscription_handler
 
     def initialize(invalid_subscription_handler: nil)
@@ -72,8 +73,5 @@ module ActionWebPush
       pool.kill unless pool.wait_for_termination(1)
     end
 
-    def logger
-      ActionWebPush.config.logger || (defined?(Rails) ? Rails.logger : Logger.new(STDOUT))
-    end
   end
 end

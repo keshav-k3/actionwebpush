@@ -3,7 +3,7 @@
 module ActionWebPush
   class Configuration
     attr_accessor :vapid_public_key, :vapid_private_key, :vapid_subject
-    attr_accessor :pool_size, :queue_size, :delivery_method, :connection_pool_size
+    attr_accessor :pool_size, :queue_size, :delivery_method, :connection_pool_size, :batch_size
     attr_accessor :logger, :timeout, :max_retries, :async
     attr_reader :delivery_methods
 
@@ -11,6 +11,7 @@ module ActionWebPush
       @pool_size = 50
       @queue_size = 10000
       @connection_pool_size = 150
+      @batch_size = 100
       @delivery_method = :web_push
       @vapid_subject = "mailto:support@example.com"
       @logger = nil
