@@ -24,6 +24,7 @@ module ActionWebPush
   autoload :TenantManager, "actionwebpush/tenant_configuration"
   autoload :SentryIntegration, "actionwebpush/sentry_integration"
   autoload :Analytics, "actionwebpush/analytics"
+  autoload :Logging, "actionwebpush/logging"
 
   module DeliveryMethods
     autoload :Base, "actionwebpush/delivery_methods/base"

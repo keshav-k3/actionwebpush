@@ -2,6 +2,7 @@
 
 module ActionWebPush
   class BatchDelivery
+    include ActionWebPush::Logging
     attr_reader :notifications, :pool
 
     def initialize(notifications, pool: nil)
@@ -59,8 +60,5 @@ module ActionWebPush
       logger.warn "Failed to cleanup expired subscription: #{e.message}"
     end
 
-    def logger
-      ActionWebPush.config.logger || (defined?(Rails) ? Rails.logger : Logger.new(STDOUT))
-    end
   end
 end
