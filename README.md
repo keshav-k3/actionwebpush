@@ -1,7 +1,7 @@
 # ActionWebPush
 
 [![Gem Version](https://badge.fury.io/rb/actionwebpush.svg)](https://badge.fury.io/rb/actionwebpush)
-[![Build Status](https://github.com/keshav-k3/actionwebpush/workflows/CI/badge.svg)](https://github.com/keshav-k3/actionwebpush/actions)
+[![Build Status](https://github.com/keshav-k3/actionwebpush/actions/workflows/main.yml/badge.svg)](https://github.com/keshav-k3/actionwebpush/actions)
 
 Rails integration for Web Push notifications with ActionMailer-like interface.
 
