@@ -2,10 +2,10 @@ PATH
   remote: .
   specs:
     actionwebpush (0.1.0)
-      concurrent-ruby (~> 1.1)
-      net-http-persistent (~> 4.0)
-      rails (>= 6.0)
-      web-push (~> 3.0)
+      concurrent-ruby (~> 1.1, >= 1.1.0)
+      net-http-persistent (~> 4.0, >= 4.0.0)
+      rails (>= 6.0, < 9.0)
+      web-push (~> 3.0, >= 3.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -193,8 +193,8 @@ DEPENDENCIES
   actionwebpush!
   minitest (~> 5.16)
   rake (~> 13.0)
-  resque (~> 2.0)
-  sqlite3 (~> 1.4)
+  resque (~> 2.0, >= 2.0.0)
+  sqlite3 (~> 1.4, >= 1.4.0)
 
 BUNDLED WITH
    2.6.9

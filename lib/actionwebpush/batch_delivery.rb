@@ -3,12 +3,24 @@
 module ActionWebPush
   class BatchDelivery
     include ActionWebPush::Logging
-    attr_reader :notifications, :pool, :batch_size
+    include ActionWebPush::Authorization
+    attr_reader :notifications, :pool, :batch_size, :current_user
 
-    def initialize(notifications, pool: nil, batch_size: nil)
+    def initialize(notifications, pool: nil, batch_size: nil, current_user: nil)
       @notifications = Array(notifications)
       @pool = pool || (defined?(Rails) ? Rails.configuration.x.action_web_push_pool : nil)
       @batch_size = batch_size || ActionWebPush.config.batch_size || 100
+      @current_user = current_user || ActionWebPush::Authorization::Utils.current_user_context
+
+      # Authorization check for batch operations
+      if @current_user && !ActionWebPush::Authorization::Utils.authorization_bypassed?
+        # Extract subscriptions from notifications for authorization check
+        subscriptions = extract_subscriptions_from_notifications(@notifications)
+        authorize_batch_operation!(
+          current_user: @current_user,
+          subscriptions: subscriptions
+        )
+      end
     end
 
     def deliver_all
@@ -62,6 +74,18 @@ module ActionWebPush
       subscription&.destroy
     rescue StandardError => e
       logger.warn "Failed to cleanup expired subscription: #{e.message}"
+    end
+
+    def extract_subscriptions_from_notifications(notifications)
+      # Extract subscription information from notifications for authorization
+      notifications.map do |notification|
+        if notification.respond_to?(:endpoint)
+          # Try to find the subscription by endpoint
+          ActionWebPush::Subscription.find_by(endpoint: notification.endpoint)
+        else
+          nil
+        end
+      end.compact
     end
 
   end

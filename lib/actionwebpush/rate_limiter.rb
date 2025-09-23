@@ -10,7 +10,7 @@ module ActionWebPush
       def initialize
         @store = {}
         @mutex = Mutex.new
-        @last_cleanup = Time.current
+        @last_cleanup = Time.now
       end
 
       def increment(key, ttl)
@@ -18,10 +18,10 @@ module ActionWebPush
           # Periodic automatic cleanup
           auto_cleanup! if should_cleanup?
 
-          @store[key] ||= { count: 0, expires_at: Time.current + ttl }
+          @store[key] ||= { count: 0, expires_at: Time.now + ttl }
 
-          if @store[key][:expires_at] < Time.current
-            @store[key] = { count: 1, expires_at: Time.current + ttl }
+          if @store[key][:expires_at] < Time.now
+            @store[key] = { count: 1, expires_at: Time.now + ttl }
           else
             @store[key][:count] += 1
           end
@@ -36,6 +36,15 @@ module ActionWebPush
         end
       end
 
+      def get(key)
+        @mutex.synchronize do
+          entry = @store[key]
+          return 0 unless entry
+          return 0 if entry[:expires_at] < Time.now
+          entry[:count]
+        end
+      end
+
       def size
         @mutex.synchronize { @store.size }
       end
@@ -43,13 +52,13 @@ module ActionWebPush
       private
 
       def should_cleanup?
-        Time.current - @last_cleanup > CLEANUP_INTERVAL
+        Time.now - @last_cleanup > CLEANUP_INTERVAL
       end
 
       def auto_cleanup!
         before_count = @store.size
-        @store.reject! { |_, v| v[:expires_at] < Time.current }
-        @last_cleanup = Time.current
+        @store.reject! { |_, v| v[:expires_at] < Time.now }
+        @last_cleanup = Time.now
 
         # Log significant cleanups
         cleaned = before_count - @store.size
@@ -71,6 +80,11 @@ module ActionWebPush
         end
         result[0]
       end
+
+      def get(key)
+        value = @redis.get(key)
+        value ? value.to_i : 0
+      end
     end
 
     attr_reader :store, :limits
@@ -89,6 +103,16 @@ module ActionWebPush
       current_count = store.increment(limit_key, limit_config[:window])
 
       if current_count > limit_config[:max_requests]
+        # Instrument rate limit exceeded event
+        ActionWebPush::Instrumentation.publish("rate_limit_exceeded",
+          resource_type: resource_type,
+          resource_id: resource_id,
+          user_id: user_id,
+          current_count: current_count,
+          max_requests: limit_config[:max_requests],
+          window: limit_config[:window]
+        )
+
         raise ActionWebPush::RateLimitExceeded,
               "Rate limit exceeded for #{resource_type}: #{current_count}/#{limit_config[:max_requests]} in #{limit_config[:window]}s"
       end
@@ -109,13 +133,14 @@ module ActionWebPush
 
       return nil unless limit_config
 
-      current_count = store.increment(limit_key, limit_config[:window]) - 1 # Subtract the increment we just added
+      # Use atomic read-only get instead of increment-subtract
+      current_count = store.get(limit_key)
 
       {
         limit: limit_config[:max_requests],
         remaining: [limit_config[:max_requests] - current_count, 0].max,
         window: limit_config[:window],
-        reset_at: Time.current + limit_config[:window]
+        reset_at: Time.now + limit_config[:window]
       }
     end
 
