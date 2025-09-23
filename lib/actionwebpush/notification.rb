@@ -4,9 +4,10 @@ require "web-push"
 
 module ActionWebPush
   class Notification
-    attr_reader :title, :body, :data, :endpoint, :p256dh_key, :auth_key, :options
+    include ActionWebPush::Authorization
+    attr_reader :title, :body, :data, :endpoint, :p256dh_key, :auth_key, :options, :current_user
 
-    def initialize(title:, body:, endpoint:, p256dh_key:, auth_key:, data: {}, **options)
+    def initialize(title:, body:, endpoint:, p256dh_key:, auth_key:, data: {}, current_user: nil, **options)
       @title = title
       @body = body
       @data = data
@@ -14,9 +15,22 @@ module ActionWebPush
       @p256dh_key = p256dh_key
       @auth_key = auth_key
       @options = options
+      @current_user = current_user || ActionWebPush::Authorization::Utils.current_user_context
     end
 
     def deliver(connection: nil)
+      # Authorization check if current_user is present
+      if @current_user && !ActionWebPush::Authorization::Utils.authorization_bypassed?
+        # Find subscription by endpoint for authorization
+        subscription = ActionWebPush::Subscription.find_by(endpoint: endpoint)
+        if subscription
+          authorize_notification_sending!(
+            current_user: @current_user,
+            subscriptions: [subscription]
+          )
+        end
+      end
+
       delivery_method = ActionWebPush.config.delivery_method_class.new
       delivery_method.deliver!(self, connection: connection)
     end
