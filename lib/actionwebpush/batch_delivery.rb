@@ -3,18 +3,22 @@
 module ActionWebPush
   class BatchDelivery
     include ActionWebPush::Logging
-    attr_reader :notifications, :pool
+    attr_reader :notifications, :pool, :batch_size
 
-    def initialize(notifications, pool: nil)
+    def initialize(notifications, pool: nil, batch_size: nil)
       @notifications = Array(notifications)
       @pool = pool || (defined?(Rails) ? Rails.configuration.x.action_web_push_pool : nil)
+      @batch_size = batch_size || ActionWebPush.config.batch_size || 100
     end
 
     def deliver_all
-      if pool
-        batch_deliver_with_pool
-      else
-        direct_batch_deliver
+      # Process notifications in batches to avoid overwhelming the system
+      notifications.each_slice(batch_size) do |batch|
+        if pool
+          batch_deliver_with_pool(batch)
+        else
+          direct_batch_deliver(batch)
+        end
       end
     end
 
@@ -24,9 +28,9 @@ module ActionWebPush
 
     private
 
-    def batch_deliver_with_pool
+    def batch_deliver_with_pool(batch_notifications)
       # Group notifications by endpoint to avoid overwhelming single endpoints
-      grouped = notifications.group_by(&:endpoint)
+      grouped = batch_notifications.group_by(&:endpoint)
 
       grouped.each do |endpoint, endpoint_notifications|
         # Stagger delivery to same endpoint to avoid rate limiting
@@ -39,8 +43,8 @@ module ActionWebPush
       end
     end
 
-    def direct_batch_deliver
-      notifications.each { |notification| deliver_single(notification) }
+    def direct_batch_deliver(batch_notifications)
+      batch_notifications.each { |notification| deliver_single(notification) }
     end
 
     def deliver_single(notification)
