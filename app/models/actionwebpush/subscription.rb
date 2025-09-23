@@ -3,6 +3,7 @@
 module ActionWebPush
   class Subscription < ActiveRecord::Base
     include ActionWebPush::Logging
+    include ActionWebPush::Authorization
 
     self.table_name = "action_web_push_subscriptions"
 
@@ -22,7 +23,11 @@ module ActionWebPush
     scope :active, -> { where("updated_at > ?", 30.days.ago) }
     scope :stale, -> { where("updated_at <= ?", 30.days.ago) }
     scope :created_since, ->(date) { where("created_at >= ?", date) }
-    scope :by_user_agent, ->(agent) { where("user_agent ILIKE ?", "%#{agent}%") }
+    scope :by_user_agent, ->(agent) {
+      return none if agent.blank?
+      escaped_agent = sanitize_sql_like(agent.to_s)
+      where("user_agent ILIKE ?", "%#{escaped_agent}%")
+    }
 
     def build_notification(title:, body:, data: {}, **options)
       ActionWebPush::Notification.new(
@@ -36,7 +41,11 @@ module ActionWebPush
       )
     end
 
-    def self.find_or_create_subscription(user:, endpoint:, p256dh_key:, auth_key:, **attributes)
+    def self.find_or_create_subscription(user:, endpoint:, p256dh_key:, auth_key:, current_user: nil, **attributes)
+      # Authorization check
+      current_user ||= ActionWebPush::Authorization::Utils.current_user_context
+      authorize_subscription_creation!(user: user, current_user: current_user, **attributes)
+
       subscription = find_by(
         user: user,
         endpoint: endpoint,
@@ -45,6 +54,10 @@ module ActionWebPush
       )
 
       if subscription
+        # Check if current user can access this existing subscription
+        if current_user && !ActionWebPush::Authorization::Utils.authorization_bypassed?
+          authorize_subscription_management!(current_user: current_user, subscription: subscription)
+        end
         subscription.touch
         subscription
       else
@@ -72,7 +85,16 @@ module ActionWebPush
       count
     end
 
-    def self.bulk_destroy_for_user(user, endpoints = nil)
+    def self.bulk_destroy_for_user(user, endpoints = nil, current_user: nil)
+      # Authorization check
+      current_user ||= ActionWebPush::Authorization::Utils.current_user_context
+      if current_user && !ActionWebPush::Authorization::Utils.authorization_bypassed?
+        unless can_create_subscription_for_user?(current_user, user)
+          raise ActionWebPush::Authorization::ForbiddenError,
+                "User #{current_user.id} is not authorized to manage subscriptions for user #{user.id}"
+        end
+      end
+
       scope = for_user(user)
       scope = scope.where(endpoint: endpoints) if endpoints
       scope.delete_all

@@ -2,14 +2,19 @@
 
 module ActionWebPush
   class Base
-    @@default_params = {}
-
+    include ActionWebPush::Authorization
     def self.default_params
-      @@default_params
+      @default_params ||= {}
     end
 
     def self.default_params=(value)
-      @@default_params = value
+      @default_params = value.dup.freeze
+    end
+
+    def self.inherited(subclass)
+      # Each subclass gets its own copy of default_params
+      subclass.instance_variable_set(:@default_params, default_params.dup)
+      super
     end
 
     attr_reader :params
@@ -22,7 +27,17 @@ module ActionWebPush
       new(**notification_params).push(subscriptions)
     end
 
-    def push(subscriptions, **notification_params)
+    def push(subscriptions, current_user: nil, **notification_params)
+      current_user ||= ActionWebPush::Authorization::Utils.current_user_context
+
+      # Authorization check
+      if current_user && !ActionWebPush::Authorization::Utils.authorization_bypassed?
+        authorize_notification_sending!(
+          current_user: current_user,
+          subscriptions: subscriptions
+        )
+      end
+
       if notification_params.empty?
         # Called with just subscriptions, use stored params
         notifications = build_notifications(subscriptions, **@params)
@@ -84,7 +99,9 @@ module ActionWebPush
     end
 
     def self.default(**params)
-      self.default_params = self.default_params.merge(params)
+      # Create a new merged hash without mutating existing params
+      merged_params = default_params.merge(params)
+      self.default_params = merged_params
     end
   end
 end
