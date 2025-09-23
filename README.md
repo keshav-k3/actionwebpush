@@ -7,7 +7,7 @@ Rails integration for Web Push notifications with ActionMailer-like interface.
 
 ActionWebPush provides a comprehensive solution for sending Web Push notifications in Rails applications. It offers an ActionMailer-inspired API, background job integration, rate limiting, and sophisticated error handling.
 
-Extracted from the [Campfire](https://github.com/keshav-k3/once-campfire) project and designed for production use.
+Extracted from the [Campfire](https://github.com/basecamp/once-campfire) project and designed for production use.
 
 > **🎉 Version 0.1.0** - Initial stable release with full feature set including ActionMailer-like interface, background jobs, rate limiting, and comprehensive error handling.
 
