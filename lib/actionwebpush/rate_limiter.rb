@@ -10,7 +10,7 @@ module ActionWebPush
       def initialize
         @store = {}
         @mutex = Mutex.new
-        @last_cleanup = Time.current
+        @last_cleanup = Time.now
       end
 
       def increment(key, ttl)
@@ -18,10 +18,10 @@ module ActionWebPush
           # Periodic automatic cleanup
           auto_cleanup! if should_cleanup?
 
-          @store[key] ||= { count: 0, expires_at: Time.current + ttl }
+          @store[key] ||= { count: 0, expires_at: Time.now + ttl }
 
-          if @store[key][:expires_at] < Time.current
-            @store[key] = { count: 1, expires_at: Time.current + ttl }
+          if @store[key][:expires_at] < Time.now
+            @store[key] = { count: 1, expires_at: Time.now + ttl }
           else
             @store[key][:count] += 1
           end
@@ -40,7 +40,7 @@ module ActionWebPush
         @mutex.synchronize do
           entry = @store[key]
           return 0 unless entry
-          return 0 if entry[:expires_at] < Time.current
+          return 0 if entry[:expires_at] < Time.now
           entry[:count]
         end
       end
@@ -52,13 +52,13 @@ module ActionWebPush
       private
 
       def should_cleanup?
-        Time.current - @last_cleanup > CLEANUP_INTERVAL
+        Time.now - @last_cleanup > CLEANUP_INTERVAL
       end
 
       def auto_cleanup!
         before_count = @store.size
-        @store.reject! { |_, v| v[:expires_at] < Time.current }
-        @last_cleanup = Time.current
+        @store.reject! { |_, v| v[:expires_at] < Time.now }
+        @last_cleanup = Time.now
 
         # Log significant cleanups
         cleaned = before_count - @store.size
@@ -140,7 +140,7 @@ module ActionWebPush
         limit: limit_config[:max_requests],
         remaining: [limit_config[:max_requests] - current_count, 0].max,
         window: limit_config[:window],
-        reset_at: Time.current + limit_config[:window]
+        reset_at: Time.now + limit_config[:window]
       }
     end
 

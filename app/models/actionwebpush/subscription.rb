@@ -135,7 +135,7 @@ module ActionWebPush
     end
 
     def days_since_last_activity
-      ((Time.current - updated_at) / 1.day).round
+      (((Time.respond_to?(:current) ? Time.current : Time.now) - updated_at) / 1.day).round
     end
 
     def self.stats
