@@ -561,10 +561,6 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
 
 The gem is available as open source under the terms of the [MIT License](LICENSE.txt).
 
-## Security
-
-For security issues, please email keshavkk.musafir@gmail.com instead of using the issue tracker.
-
 ## Roadmap
 
 As this is the initial 0.1.0 release, we're excited to hear from the community! Planned future enhancements include:
