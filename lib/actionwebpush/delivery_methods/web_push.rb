@@ -21,10 +21,10 @@ module ActionWebPush
             urgency: notification.options[:urgency] || "high"
           )
 
-          payload[:success] = response.success?
+          payload[:success] = response.kind_of? Net::HTTPSuccess
           payload[:response_code] = response.code if response.respond_to?(:code)
 
-          response.success?
+          response.kind_of? Net::HTTPSuccess
         end
       rescue ::WebPush::ExpiredSubscription => e
         context = {

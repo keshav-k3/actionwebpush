@@ -69,10 +69,10 @@ class DeliveryMethodsTest < Minitest::Test
 
     # Mock WebPush response (called twice - for payload and return)
     mock_response = Minitest::Mock.new
-    mock_response.expect :success?, true
-    mock_response.expect :success?, true
+    mock_response.expect :kind_of?, true, [ Net::HTTPSuccess ]
+    mock_response.expect :kind_of?, true, [ Net::HTTPSuccess ]
 
-    ::WebPush.stub :payload_send, -> (*args) { mock_response } do
+    ::WebPush.stub :payload_send, ->(*args) { mock_response } do
       result = web_push_method.deliver!(@notification)
       assert result
     end
@@ -86,7 +86,7 @@ class DeliveryMethodsTest < Minitest::Test
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
 
     # Mock WebPush error
-    ::WebPush.stub :payload_send, -> (*args) { raise ::WebPush::ResponseError.new("Test error") } do
+    ::WebPush.stub :payload_send, ->(*args) { raise ::WebPush::ResponseError.new("Test error") } do
       assert_raises(ActionWebPush::DeliveryError) do
         web_push_method.deliver!(@notification)
       end
@@ -99,7 +99,7 @@ class DeliveryMethodsTest < Minitest::Test
     web_push_method = ActionWebPush::DeliveryMethods::WebPush.new
 
     # Mock expired subscription error - simplified for testing
-    ::WebPush.stub :payload_send, -> (*args) { raise StandardError.new("410 Gone") } do
+    ::WebPush.stub :payload_send, ->(*args) { raise StandardError.new("410 Gone") } do
       assert_raises(ActionWebPush::DeliveryError) do
         web_push_method.deliver!(@notification)
       end

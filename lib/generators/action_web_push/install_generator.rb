@@ -3,11 +3,13 @@
 require "rails/generators/base"
 
 module ActionWebPush
-  module Generators
+    module Generators
     class InstallGenerator < Rails::Generators::Base
+      include Rails::Generators::Migration
+
       source_root File.expand_path("templates", __dir__)
 
-      def create_migration
+      def create_migration_web_push
         migration_template(
           "create_action_web_push_subscriptions.rb",
           "db/migrate/create_action_web_push_subscriptions.rb",
@@ -20,7 +22,7 @@ module ActionWebPush
       end
 
       def mount_engine
-        route "mount ActionWebPush::Engine => '/push'"
+        route "mount ActionWebPush::Engine => '/push'", namespace: [ 'awp' ]
       end
 
       def show_readme
@@ -37,11 +39,16 @@ module ActionWebPush
 
       private
 
+      def self.next_migration_number(dirname)
+        next_migration_number = current_migration_number(dirname) + 1
+        ActiveRecord::Migration.next_migration_number(next_migration_number)
+      end
+
       def migration_version
         if Rails::VERSION::MAJOR >= 5
           "[#{Rails::VERSION::MAJOR}.#{Rails::VERSION::MINOR}]"
         end
       end
     end
-  end
+    end
 end
