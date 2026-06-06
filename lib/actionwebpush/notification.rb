@@ -26,7 +26,7 @@ module ActionWebPush
         if subscription
           authorize_notification_sending!(
             current_user: @current_user,
-            subscriptions: [subscription]
+            subscriptions: [ subscription ]
           )
         end
       end

@@ -320,27 +320,37 @@ ActionWebPush::Subscription.expired.destroy_all
 Example JavaScript for subscription management:
 
 ```javascript
+// This is only one implementation of this function, so you can override it if you wish
+function arrayBufferToBase64( buffer ) {
+  var binary = '';
+  var bytes = new Uint8Array( buffer );
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode( bytes[ i ] );
+  }
+  return window.btoa( binary );
+}
+
 // Register service worker and get subscription
-navigator.serviceWorker.register('/sw.js').then(registration => {
+navigator.serviceWorker.register('/service-worker.js').then(registration => {
   return registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: '<%= ActionWebPush.config.vapid_public_key %>'
+    applicationServerKey: new Uint8Array(<%= Base64.urlsafe_decode64(ActionWebPush.config.vapid_public_key).bytes %>)
   });
 }).then(subscription => {
   // Send subscription to your Rails app
-  fetch('/push_subscriptions', {
+  fetch('/awp/push/subscriptions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
     },
     body: JSON.stringify({
+      user_id: // pass user id here,
       subscription: {
         endpoint: subscription.endpoint,
-        keys: {
-          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-          auth: arrayBufferToBase64(subscription.getKey('auth'))
-        }
+        p256dh_key: arrayBufferToBase64(subscription.getKey('p256dh')),
+        auth_key: arrayBufferToBase64(subscription.getKey('auth'))
       }
     })
   });

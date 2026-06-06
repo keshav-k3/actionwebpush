@@ -26,10 +26,10 @@ class ComprehensiveTest < Minitest::Test
 
     # Mock WebPush.payload_send to avoid actual network call (called twice)
     mock_response = Minitest::Mock.new
-    mock_response.expect :success?, true
-    mock_response.expect :success?, true
+    mock_response.expect :kind_of?, true, [ Net::HTTPSuccess ]
+    mock_response.expect :kind_of?, true, [ Net::HTTPSuccess ]
 
-    ::WebPush.stub :payload_send, -> (*args) { mock_response } do
+    ::WebPush.stub :payload_send, ->(*args) { mock_response } do
       result = web_push_method.deliver!(notification)
       assert result, "Web push delivery should succeed"
     end

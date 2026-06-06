@@ -4,7 +4,7 @@ module ActionWebPush
   class SubscriptionsController < ActionController::Base
     before_action :authenticate_user!, if: :respond_to_authenticate_user?
     before_action :set_user
-    before_action :set_subscription, only: [:show, :destroy]
+    before_action :set_subscription, only: [ :show, :destroy ]
 
     def index
       @subscriptions = ActionWebPush::Subscription.for_user(@user)
@@ -18,7 +18,9 @@ module ActionWebPush
     def create
       @subscription = ActionWebPush::Subscription.find_or_create_subscription(
         user: @user,
-        **subscription_params,
+        endpoint: subscription_params["endpoint"],
+        p256dh_key: subscription_params["p256dh_key"],
+        auth_key: subscription_params["auth_key"],
         user_agent: request.user_agent
       )
 
